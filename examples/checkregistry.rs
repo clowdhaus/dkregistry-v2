@@ -4,6 +4,11 @@ use tracing::{error, info};
 
 #[tokio::main]
 async fn main() {
+  tracing_subscriber::fmt()
+    .pretty()
+    .with_max_level(tracing::Level::INFO)
+    .init();
+
   let registry = match std::env::args().nth(1) {
     Some(x) => x,
     None => "registry-1.docker.io".into(),

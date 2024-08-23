@@ -49,13 +49,13 @@ url = "2.5"
 
 [dev-dependencies]
 dirs = "5.0"
-env_logger = "0.11"
 hyper = "1.4"
 mockito = "1.5"
 native-tls = "0.2"
 test-case = "3.3"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [features]
 default = ["reqwest-default-tls"]

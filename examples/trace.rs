@@ -5,6 +5,11 @@ use tracing::{error, info, warn};
 
 #[tokio::main]
 async fn main() {
+  tracing_subscriber::fmt()
+    .pretty()
+    .with_max_level(tracing::Level::INFO)
+    .init();
+
   let dkr_ref = match std::env::args().nth(1) {
     Some(ref x) => reference::Reference::from_str(x),
     None => reference::Reference::from_str("quay.io/coreos/etcd"),
@@ -50,11 +55,6 @@ async fn run(
   user: Option<String>,
   passwd: Option<String>,
 ) -> Result<(), boxed::Box<dyn error::Error>> {
-  env_logger::Builder::new()
-    .filter(Some("docker_registry"), log::LevelFilter::Trace)
-    .filter(Some("trace"), log::LevelFilter::Trace)
-    .try_init()?;
-
   let image = dkr_ref.repository();
   let version = dkr_ref.version();
 

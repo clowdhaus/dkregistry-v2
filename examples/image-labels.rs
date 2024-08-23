@@ -5,6 +5,11 @@ use tracing::{error, info, warn};
 
 #[tokio::main]
 async fn main() {
+  tracing_subscriber::fmt()
+    .pretty()
+    .with_max_level(tracing::Level::INFO)
+    .init();
+
   let dkr_ref = match std::env::args().nth(1) {
     Some(ref x) => reference::Reference::from_str(x),
     None => reference::Reference::from_str("quay.io/steveej/cincinnati-test-labels:0.0.0"),

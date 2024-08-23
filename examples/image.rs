@@ -77,10 +77,10 @@ async fn run(
   passwd: Option<String>,
   path: &Path,
 ) -> Result<(), boxed::Box<dyn error::Error>> {
-  env_logger::Builder::new()
-    .filter(Some("docker_registry"), log::LevelFilter::Trace)
-    .filter(Some("trace"), log::LevelFilter::Trace)
-    .try_init()?;
+  tracing_subscriber::fmt()
+    .pretty()
+    .with_max_level(tracing::Level::INFO)
+    .init();
 
   let client = docker_registry::v2::Client::configure()
     .registry(registry)
