@@ -1,11 +1,15 @@
 [package]
 name = "docker-registry"
 rust-version = "1.70.0"
-version = "0.5.1-alpha.0"
-authors = ["Bryant Biggs <bryantbiggs@gamil.com>", "Luca Bruno <lucab@debian.org>", "Stefan Junker <sjunker@redhat.com>"]
+version = "0.6.0"
+authors = [
+  "Luca Bruno <lucab@debian.org>",
+  "Stefan Junker <sjunker@redhat.com>",
+  "Bryant Biggs <bryantbiggs@gamil.com>",
+]
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/docker-registry"
-repository = "https://github.com/clowdhaus/docker-registry-http-api-v2"
+repository = "https://github.com/clowdhaus/docker-registry"
 description = "A pure-Rust asynchronous library for Docker Registry HTTP API v2"
 keywords = [
   "docker", 
@@ -14,17 +18,10 @@ keywords = [
 ]
 exclude = [
   ".gitignore",
+  "certificates",
+  "tests",
 ]
 edition = "2021"
-
-[package.metadata.release]
-disable-publish = true
-disable-push = true
-post-release-commit-message = "cargo: development version bump"
-pre-release-commit-message = "cargo: docker-registry release {{version}}"
-sign-commit = true
-sign-tag = true
-tag-message = "docker-registry v{{version}}"
 
 [dependencies]
 base64 = "0.22"

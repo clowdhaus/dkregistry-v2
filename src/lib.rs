@@ -48,7 +48,7 @@ use base64::prelude::*;
 use errors::{Error, Result};
 
 /// Default User-Agent client identity.
-pub static USER_AGENT: &str = "camallo-docker_registry/0.0";
+pub static USER_AGENT: &str = "clowdhaus/docker-registry/0.0";
 
 /// Get registry credentials from a JSON config reader.
 ///

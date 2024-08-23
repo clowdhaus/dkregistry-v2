@@ -1,4 +1,4 @@
-# Docker Registry HTTP API v2
+# Docker Registry
 
 A pure-Rust asynchronous library for the Docker Registry HTTP API v2.
 
