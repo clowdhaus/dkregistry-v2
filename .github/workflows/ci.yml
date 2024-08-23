@@ -93,6 +93,8 @@ jobs:
 
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
