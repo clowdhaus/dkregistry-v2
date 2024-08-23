@@ -1,6 +1,7 @@
 name: Continuous integration - private registry
 
 on:
+  pull_request:
   merge_group:
 
 jobs:
