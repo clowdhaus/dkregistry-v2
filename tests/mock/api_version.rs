@@ -12,7 +12,7 @@ async fn test_version_check_status_ok() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -20,16 +20,16 @@ async fn test_version_check_status_ok() {
     .build()
     .unwrap();
 
-  let ok = dclient.is_v2_supported().await.unwrap();
+  let ok = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(ok);
 
-  let _ensure_v2 = dclient.ensure_v2_registry().await.unwrap();
+  let _ensure_v2 = client.ensure_v2_registry().await.unwrap();
 }
 
 #[tokio::test]
-async fn test_version_check_status_unauth() {
+async fn test_version_check_status_no_auth() {
   let mut server = mockito::Server::new_async().await;
   let addr = server.host_with_port();
 
@@ -39,7 +39,7 @@ async fn test_version_check_status_unauth() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -47,14 +47,14 @@ async fn test_version_check_status_unauth() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(res);
 }
 
 #[tokio::test]
-async fn test_version_check_status_notfound() {
+async fn test_version_check_status_not_found() {
   let mut server = mockito::Server::new_async().await;
   let addr = server.host_with_port();
 
@@ -64,7 +64,7 @@ async fn test_version_check_status_notfound() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -72,7 +72,7 @@ async fn test_version_check_status_notfound() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(!res);
@@ -89,7 +89,7 @@ async fn test_version_check_status_forbidden() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -97,19 +97,19 @@ async fn test_version_check_status_forbidden() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(!res);
 }
 
 #[tokio::test]
-async fn test_version_check_noheader() {
+async fn test_version_check_no_header() {
   let mut server = mockito::Server::new_async().await;
   let addr = server.host_with_port();
   let mock = server.mock("GET", "/v2/").with_status(403).create_async().await;
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -117,7 +117,7 @@ async fn test_version_check_noheader() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(!res);
@@ -134,7 +134,7 @@ async fn test_version_check_trailing_slash() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -142,7 +142,7 @@ async fn test_version_check_trailing_slash() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   // TODO - why does this fail?
   // mock.assert_async().await;

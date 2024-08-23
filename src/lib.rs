@@ -16,11 +16,11 @@
 //!
 //! // Check whether a registry supports API v2.
 //! let host = "quay.io";
-//! let dclient = Client::configure()
+//! let client = Client::configure()
 //!   .insecure_registry(false)
 //!   .registry(host)
 //!   .build()?;
-//! match dclient.is_v2_supported().await? {
+//! match client.is_v2_supported().await? {
 //!   false => println!("{} does NOT support v2", host),
 //!   true => println!("{} supports v2", host),
 //! };

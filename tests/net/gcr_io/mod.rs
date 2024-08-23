@@ -4,8 +4,8 @@ use tokio::runtime::Runtime;
 static REGISTRY: &str = "gcr.io";
 
 fn get_env() -> Option<(String, String)> {
-  let user = ::std::env::var("DKREG_GCR_USER");
-  let password = ::std::env::var("DKREG_GCR_PASSWD");
+  let user = ::std::env::var("DOCKER_REGISTRY_GCR_USER");
+  let password = ::std::env::var("DOCKER_REGISTRY_GCR_PASSWD");
   match (user, password) {
     (Ok(u), Ok(t)) => Some((u, t)),
     _ => None,
@@ -15,7 +15,10 @@ fn get_env() -> Option<(String, String)> {
 #[test]
 fn test_dockerio_getenv() {
   if get_env().is_none() {
-    println!("[WARN] {}: missing DKREG_GCR_USER / DKREG_GCR_PASSWD", REGISTRY);
+    println!(
+      "[WARN] {}: missing DOCKER_REGISTRY_GCR_USER / DOCKER_REGISTRY_GCR_PASSWD",
+      REGISTRY
+    );
   }
 }
 
@@ -27,7 +30,7 @@ fn test_gcrio_base() {
   };
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(Some(user))
@@ -35,7 +38,7 @@ fn test_gcrio_base() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.is_v2_supported();
+  let futcheck = client.is_v2_supported();
 
   let res = runtime.block_on(futcheck).unwrap();
   assert!(res);
@@ -44,7 +47,7 @@ fn test_gcrio_base() {
 #[test]
 fn test_gcrio_insecure() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(true)
     .username(None)
@@ -52,7 +55,7 @@ fn test_gcrio_insecure() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.is_v2_supported();
+  let futcheck = client.is_v2_supported();
 
   let res = runtime.block_on(futcheck).unwrap();
   assert!(res);
@@ -61,7 +64,7 @@ fn test_gcrio_insecure() {
 #[test]
 fn test_gcrio_get_tags() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -70,7 +73,7 @@ fn test_gcrio_get_tags() {
     .unwrap();
 
   let image = "google_containers/mounttest";
-  let fut_tags = dclient.get_tags(image, None);
+  let fut_tags = client.get_tags(image, None);
   let tags = runtime.block_on(fut_tags.collect::<Vec<_>>());
   let has_version = tags.iter().map(|t| t.as_ref().unwrap()).any(|t| t == "0.2");
 
@@ -80,7 +83,7 @@ fn test_gcrio_get_tags() {
 #[test]
 fn test_gcrio_has_manifest() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -93,7 +96,7 @@ fn test_gcrio_has_manifest() {
   let manifest_type = docker_registry::mediatypes::MediaTypes::ManifestV2S1Signed.to_string();
   let manifest_type_str = manifest_type.as_str();
   let manifest_type_vec = vec![manifest_type_str];
-  let fut = dclient.has_manifest(image, tag, Some(manifest_type_vec.as_slice()));
+  let fut = client.has_manifest(image, tag, Some(manifest_type_vec.as_slice()));
   let has_manifest = runtime.block_on(fut).unwrap();
 
   assert_eq!(
@@ -105,7 +108,7 @@ fn test_gcrio_has_manifest() {
 #[test]
 fn test_gcrio_get_manifest() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -116,7 +119,7 @@ fn test_gcrio_get_manifest() {
   let image = "google_containers/mounttest";
   let tag = "0.2";
 
-  let fut = dclient.get_manifest(image, tag);
+  let fut = client.get_manifest(image, tag);
   runtime
     .block_on(fut)
     .expect("check that manifest was downloaded successfully");

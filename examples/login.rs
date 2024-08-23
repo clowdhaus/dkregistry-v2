@@ -14,13 +14,13 @@ async fn main() {
     None => "".into(),
   };
 
-  let user = std::env::var("DKREG_USER").ok();
+  let user = std::env::var("DOCKER_REGISTRY_USER").ok();
   if user.is_none() {
-    warn!("[{registry}] no $DKREG_USER for login user");
+    warn!("[{registry}] no $DOCKER_REGISTRY_USER for login user");
   }
-  let password = std::env::var("DKREG_PASSWD").ok();
+  let password = std::env::var("DOCKER_REGISTRY_PASSWD").ok();
   if password.is_none() {
-    warn!("[{registry}] no $DKREG_PASSWD for login password");
+    warn!("[{registry}] no $DOCKER_REGISTRY_PASSWD for login password");
   }
 
   let res = run(&registry, user, password, login_scope).await;
@@ -49,7 +49,7 @@ async fn run(
     .password(passwd)
     .build()?;
 
-  let dclient = client.authenticate(&[&login_scope]).await?;
-  dclient.is_auth().await?;
+  let client = client.authenticate(&[&login_scope]).await?;
+  client.is_auth().await?;
   Ok(())
 }

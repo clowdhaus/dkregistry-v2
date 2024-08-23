@@ -27,13 +27,13 @@ async fn main() {
       warn!("[{registry}] no credentials found in config.json");
     }
   } else {
-    user = env::var("DKREG_USER").ok();
+    user = env::var("DOCKER_REGISTRY_USER").ok();
     if user.is_none() {
-      warn!("[{registry}] no $DKREG_USER for login user");
+      warn!("[{registry}] no $DOCKER_REGISTRY_USER for login user");
     }
-    password = env::var("DKREG_PASSWD").ok();
+    password = env::var("DOCKER_REGISTRY_PASSWD").ok();
     if password.is_none() {
-      warn!("[{registry}] no $DKREG_PASSWD for login password");
+      warn!("[{registry}] no $DOCKER_REGISTRY_PASSWD for login password");
     }
   };
 
@@ -67,14 +67,14 @@ async fn run(
 
   let login_scope = "";
 
-  let dclient = client.authenticate(&[login_scope]).await?;
-  let manifest = dclient.get_manifest(&image, &version).await?;
+  let client = client.authenticate(&[login_scope]).await?;
+  let manifest = client.get_manifest(&image, &version).await?;
 
   let layers_digests = manifest.layers_digests(None)?;
   info!("{} -> got {} layer(s)", &image, layers_digests.len(),);
 
   for layer_digest in &layers_digests {
-    let blob = dclient.get_blob(&image, layer_digest).await?;
+    let blob = client.get_blob(&image, layer_digest).await?;
     info!("Layer {layer_digest}, got {} bytes.", blob.len());
   }
 

@@ -18,7 +18,7 @@ fn test_dockerv2_tags_simple() {
     .create();
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -26,7 +26,7 @@ fn test_dockerv2_tags_simple() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.get_tags(name, None);
+  let futcheck = client.get_tags(name, None);
 
   let res = runtime.block_on(futcheck.map(Result::unwrap).collect::<Vec<_>>());
   mock.assert();
@@ -60,7 +60,7 @@ fn test_dockerv2_tags_paginate() {
     .create();
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -68,7 +68,7 @@ fn test_dockerv2_tags_paginate() {
     .build()
     .unwrap();
 
-  let next = Box::pin(dclient.get_tags(name, Some(1)).map(Result::unwrap));
+  let next = Box::pin(client.get_tags(name, Some(1)).map(Result::unwrap));
 
   let (first_tag, stream_rest) = runtime.block_on(next.into_future());
   assert_eq!(first_tag.unwrap(), "t1".to_owned());
@@ -100,7 +100,7 @@ fn test_dockerv2_tags_404() {
     .create();
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -108,7 +108,7 @@ fn test_dockerv2_tags_404() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.get_tags(name, None);
+  let futcheck = client.get_tags(name, None);
 
   let res = runtime.block_on(futcheck.collect::<Vec<_>>());
   mock.assert();
@@ -131,7 +131,7 @@ fn test_dockerv2_tags_missing_header() {
     .create();
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -139,7 +139,7 @@ fn test_dockerv2_tags_missing_header() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.get_tags(name, None);
+  let futcheck = client.get_tags(name, None);
 
   let res = runtime.block_on(futcheck.map(Result::unwrap).collect::<Vec<_>>());
   mock.assert();

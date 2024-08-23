@@ -79,8 +79,8 @@ jobs:
       # - name: Run cargo test (test-net-private)
       #   run: cargo test --features test-net,test-net-private
       #   env:
-      #     DKREG_QUAY_USER: ${{ secrets.DKREG_QUAY_USER }}
-      #     DKREG_QUAY_PASSWD: ${{ secrets.DKREG_QUAY_PASSWD }}
+      #     DOCKER_REGISTRY_QUAY_USER: ${{ secrets.DOCKER_REGISTRY_QUAY_USER }}
+      #     DOCKER_REGISTRY_QUAY_PASSWD: ${{ secrets.DOCKER_REGISTRY_QUAY_PASSWD }}
 
   lints:
     name: Lints

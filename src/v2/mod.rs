@@ -16,8 +16,8 @@
 //! use docker_registry::v2::Client;
 //!
 //! // Retrieve an image manifest.
-//! let dclient = Client::configure().registry("quay.io").build()?;
-//! let manifest = dclient.get_manifest("coreos/etcd", "v3.1.0").await?;
+//! let client = Client::configure().registry("quay.io").build()?;
+//! let manifest = client.get_manifest("coreos/etcd", "v3.1.0").await?;
 //! #
 //! # Ok(())
 //! # };

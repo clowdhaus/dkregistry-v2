@@ -13,7 +13,7 @@ async fn test_base_no_insecure() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(false)
     .username(None)
@@ -21,7 +21,7 @@ async fn test_base_no_insecure() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   // This relies on the fact that mockito is HTTP-only and
   // trying to speak TLS to it results in garbage/errors.
@@ -41,7 +41,7 @@ async fn test_base_useragent() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -49,7 +49,7 @@ async fn test_base_useragent() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(res);
@@ -69,7 +69,7 @@ async fn test_base_custom_useragent() {
     .with_header(API_VERSION_K, API_VERSION_V)
     .create();
 
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .user_agent(Some(ua.to_string()))
@@ -78,7 +78,7 @@ async fn test_base_custom_useragent() {
     .build()
     .unwrap();
 
-  let res = dclient.is_v2_supported().await.unwrap();
+  let res = client.is_v2_supported().await.unwrap();
 
   mock.assert_async().await;
   assert!(res);

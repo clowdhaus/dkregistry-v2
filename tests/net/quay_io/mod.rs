@@ -5,8 +5,8 @@ use tokio::runtime::Runtime;
 static REGISTRY: &str = "quay.io";
 
 fn get_env() -> Option<(String, String)> {
-  let user = ::std::env::var("DKREG_QUAY_USER");
-  let password = ::std::env::var("DKREG_QUAY_PASSWD");
+  let user = ::std::env::var("DOCKER_REGISTRY_QUAY_USER");
+  let password = ::std::env::var("DOCKER_REGISTRY_QUAY_PASSWD");
   match (user, password) {
     (Ok(u), Ok(t)) => Some((u, t)),
     _ => None,
@@ -26,7 +26,7 @@ fn common_init(login_scope: Option<&str>) -> Option<(tokio::runtime::Runtime, do
     (None, None, "".to_string())
   };
 
-  let dclient = runtime
+  let client = runtime
     .block_on(
       docker_registry::v2::Client::configure()
         .registry(REGISTRY)
@@ -39,13 +39,16 @@ fn common_init(login_scope: Option<&str>) -> Option<(tokio::runtime::Runtime, do
     )
     .unwrap();
 
-  Some((runtime, dclient))
+  Some((runtime, client))
 }
 
 #[test]
 fn test_quayio_getenv() {
   if get_env().is_none() {
-    println!("[WARN] {}: missing DKREG_QUAY_USER / DKREG_QUAY_PASSWD", REGISTRY);
+    println!(
+      "[WARN] {}: missing DOCKER_REGISTRY_QUAY_USER / DOCKER_REGISTRY_QUAY_PASSWD",
+      REGISTRY
+    );
   }
 }
 
@@ -57,7 +60,7 @@ fn test_quayio_base() {
   };
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(Some(user))
@@ -65,7 +68,7 @@ fn test_quayio_base() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.is_v2_supported();
+  let futcheck = client.is_v2_supported();
 
   let res = runtime.block_on(futcheck).unwrap();
   assert!(res);
@@ -75,7 +78,7 @@ fn test_quayio_base() {
 #[ignore]
 fn test_quayio_insecure() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(true)
     .username(None)
@@ -83,7 +86,7 @@ fn test_quayio_insecure() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.is_v2_supported();
+  let futcheck = client.is_v2_supported();
 
   let res = runtime.block_on(futcheck).unwrap();
   assert!(res);
@@ -93,9 +96,9 @@ fn test_quayio_insecure() {
 #[test]
 fn test_quayio_auth_login() {
   let login_scope = "";
-  let (runtime, dclient) = common_init(Some(login_scope)).unwrap();
+  let (runtime, client) = common_init(Some(login_scope)).unwrap();
 
-  let futlogin = dclient.is_auth();
+  let futlogin = client.is_auth();
   let res = runtime.block_on(futlogin).unwrap();
   assert!(res);
 }
@@ -103,7 +106,7 @@ fn test_quayio_auth_login() {
 #[test]
 fn test_quayio_get_tags_simple() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -112,7 +115,7 @@ fn test_quayio_get_tags_simple() {
     .unwrap();
 
   let image = "coreos/alpine-sh";
-  let fut_tags = dclient.get_tags(image, None);
+  let fut_tags = client.get_tags(image, None);
   let tags = runtime.block_on(fut_tags.collect::<Vec<_>>());
   let has_version = tags.iter().map(|t| t.as_ref().unwrap()).any(|t| t == "latest");
 
@@ -122,7 +125,7 @@ fn test_quayio_get_tags_simple() {
 #[test]
 fn test_quayio_get_tags_limit() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -131,7 +134,7 @@ fn test_quayio_get_tags_limit() {
     .unwrap();
 
   let image = "coreos/alpine-sh";
-  let fut_tags = dclient.get_tags(image, Some(10));
+  let fut_tags = client.get_tags(image, Some(10));
   let tags = runtime.block_on(fut_tags.collect::<Vec<_>>());
   let has_version = tags.iter().map(|t| t.as_ref().unwrap()).any(|t| t == "latest");
 
@@ -141,7 +144,7 @@ fn test_quayio_get_tags_limit() {
 #[test]
 fn test_quayio_get_tags_pagination() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -150,7 +153,7 @@ fn test_quayio_get_tags_pagination() {
     .unwrap();
 
   let image = "coreos/flannel";
-  let fut_tags = dclient.get_tags(image, Some(20));
+  let fut_tags = client.get_tags(image, Some(20));
   let tags = runtime.block_on(fut_tags.collect::<Vec<_>>());
   let has_version = tags.iter().map(|t| t.as_ref().unwrap()).any(|t| t == "v0.10.0");
 
@@ -162,10 +165,10 @@ fn test_quayio_get_tags_pagination() {
 fn test_quayio_auth_tags() {
   let image = "steveej/cincinnati-test";
   let login_scope = format!("repository:{}:pull", image);
-  let (runtime, dclient) = common_init(Some(&login_scope)).unwrap();
+  let (runtime, client) = common_init(Some(&login_scope)).unwrap();
 
   let tags = runtime
-    .block_on(dclient.get_tags(image, None).collect::<Vec<_>>())
+    .block_on(client.get_tags(image, None).collect::<Vec<_>>())
     .into_iter()
     .map(Result::unwrap)
     .collect::<Vec<_>>();
@@ -177,7 +180,7 @@ fn test_quayio_auth_tags() {
 #[test]
 fn test_quayio_has_manifest() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -187,7 +190,7 @@ fn test_quayio_has_manifest() {
 
   let image = "coreos/alpine-sh";
   let reference = "latest";
-  let fut = dclient.has_manifest(image, reference, None);
+  let fut = client.has_manifest(image, reference, None);
   let has_manifest = runtime.block_on(fut).unwrap();
 
   assert_eq!(has_manifest, Some(MediaTypes::ManifestV2S1Signed));
@@ -199,9 +202,9 @@ fn test_quayio_auth_manifest() {
   let image = "steveej/cincinnati-test";
   let reference = "0.0.1";
   let login_scope = format!("repository:{}:pull", image);
-  let (runtime, dclient) = common_init(Some(&login_scope)).unwrap();
+  let (runtime, client) = common_init(Some(&login_scope)).unwrap();
 
-  let fut_has_manifest = dclient.has_manifest(image, reference, None);
+  let fut_has_manifest = client.has_manifest(image, reference, None);
 
   let has_manifest = runtime.block_on(fut_has_manifest).unwrap();
   assert_eq!(has_manifest, Some(MediaTypes::ManifestV2S1Signed));
@@ -210,7 +213,7 @@ fn test_quayio_auth_manifest() {
 #[test]
 fn test_quayio_has_no_manifest() {
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(REGISTRY)
     .insecure_registry(false)
     .username(None)
@@ -220,7 +223,7 @@ fn test_quayio_has_no_manifest() {
 
   let image = "coreos/alpine-sh";
   let reference = "clearly_bogus";
-  let fut = dclient.has_manifest(image, reference, None);
+  let fut = client.has_manifest(image, reference, None);
   let has_manifest = runtime.block_on(fut).unwrap();
 
   assert_eq!(has_manifest, None);
@@ -233,8 +236,8 @@ fn test_quayio_auth_manifestref_missing() {
   let tag = "no-such-tag";
 
   let login_scope = format!("repository:{}:pull", image);
-  let (runtime, dclient) = common_init(Some(&login_scope)).unwrap();
-  let fut_actual = async { dclient.get_manifestref(image, tag).await };
+  let (runtime, client) = common_init(Some(&login_scope)).unwrap();
+  let fut_actual = async { client.get_manifestref(image, tag).await };
   let actual = runtime.block_on(fut_actual);
   assert!(actual.is_err());
 }
@@ -247,8 +250,8 @@ fn test_quayio_auth_manifestref() {
   let expected = String::from("sha256:cc1f79c6a6fc92982a10ced91bddeefb8fbd037a01ae106a64d0a7e79d0e4813");
 
   let login_scope = format!("repository:{}:pull", image);
-  let (runtime, dclient) = common_init(Some(&login_scope)).unwrap();
-  let fut_actual = async { dclient.get_manifestref(image, tag).await.unwrap() };
+  let (runtime, client) = common_init(Some(&login_scope)).unwrap();
+  let fut_actual = async { client.get_manifestref(image, tag).await.unwrap() };
   let actual = runtime.block_on(fut_actual).unwrap();
   assert_eq!(actual, expected);
 }
@@ -262,10 +265,10 @@ fn test_quayio_auth_layer_blob() {
   let layer0_len: usize = 198;
 
   let login_scope = format!("repository:{}:pull", image);
-  let (runtime, dclient) = common_init(Some(&login_scope)).unwrap();
+  let (runtime, client) = common_init(Some(&login_scope)).unwrap();
 
   let fut_layer0_blob = async {
-    let digest = dclient
+    let digest = client
       .get_manifest(image, reference)
       .await
       .and_then(|manifest| {
@@ -278,7 +281,7 @@ fn test_quayio_auth_layer_blob() {
       })
       .unwrap();
 
-    dclient.get_blob(image, &digest).await
+    client.get_blob(image, &digest).await
   };
 
   let layer0_blob = runtime.block_on(fut_layer0_blob).unwrap();

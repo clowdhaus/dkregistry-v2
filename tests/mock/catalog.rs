@@ -16,7 +16,7 @@ fn test_catalog_simple() {
     .create();
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -24,7 +24,7 @@ fn test_catalog_simple() {
     .build()
     .unwrap();
 
-  let futcheck = dclient.get_catalog(None);
+  let futcheck = client.get_catalog(None);
   let res = runtime.block_on(futcheck.map(Result::unwrap).collect::<Vec<_>>());
 
   mock.assert();
@@ -50,7 +50,7 @@ fn test_catalog_paginate() {
     .create();
 
   let runtime = Runtime::new().unwrap();
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(&addr)
     .insecure_registry(true)
     .username(None)
@@ -58,7 +58,7 @@ fn test_catalog_paginate() {
     .build()
     .unwrap();
 
-  let next = Box::pin(dclient.get_catalog(Some(1)));
+  let next = Box::pin(client.get_catalog(Some(1)));
 
   let (page1, next) = runtime.block_on(next.into_future());
   assert_eq!(page1.unwrap().unwrap(), "r1/i1".to_owned());

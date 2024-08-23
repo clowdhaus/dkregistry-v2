@@ -18,12 +18,12 @@ async fn main() {
 }
 
 async fn run(host: &str) -> Result<bool, boxed::Box<dyn error::Error>> {
-  let dclient = docker_registry::v2::Client::configure()
+  let client = docker_registry::v2::Client::configure()
     .registry(host)
     .insecure_registry(false)
     .build()?;
 
-  let supported = dclient.is_v2_supported().await?;
+  let supported = client.is_v2_supported().await?;
   if supported {
     info!("{host} supports v2");
   } else {
