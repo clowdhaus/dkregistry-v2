@@ -82,3 +82,54 @@ fn test_dockerio_anonymous_auth() {
   let res = runtime.block_on(futcheck);
   assert!(res.is_ok());
 }
+
+/// Check that when requesting an image that does not exist
+/// we get an Api error.
+#[test]
+fn test_dockerio_anonymous_non_existent_image() {
+  let runtime = Runtime::new().unwrap();
+  let image = "bad/image";
+  let version = "latest";
+  let login_scope = format!("repository:{}:pull", image);
+  let scopes = vec![login_scope.as_str()];
+  let dclient_future = docker_registry::v2::Client::configure()
+    .registry(REGISTRY)
+    .insecure_registry(false)
+    .username(None)
+    .password(None)
+    .build()
+    .unwrap()
+    .authenticate(scopes.as_slice());
+
+  let dclient = runtime.block_on(dclient_future).unwrap();
+  let futcheck = dclient.get_manifest(image, version);
+
+  let res = runtime.block_on(futcheck);
+  assert!(res.is_err());
+  assert!(matches!(res, Err(docker_registry::errors::Error::Api(_))));
+}
+
+/// Test that we can deserialize OCI image manifest, as is
+/// returned for s390x/ubuntu image.
+#[test]
+fn test_dockerio_anonymous_auth_oci_manifest() {
+  let runtime = Runtime::new().unwrap();
+  let image = "s390x/ubuntu";
+  let version = "latest";
+  let login_scope = format!("repository:{}:pull", image);
+  let scopes = vec![login_scope.as_str()];
+  let dclient_future = docker_registry::v2::Client::configure()
+    .registry(REGISTRY)
+    .insecure_registry(false)
+    .username(None)
+    .password(None)
+    .build()
+    .unwrap()
+    .authenticate(scopes.as_slice());
+
+  let dclient = runtime.block_on(dclient_future).unwrap();
+  let futcheck = dclient.get_manifest(image, version);
+
+  let res = runtime.block_on(futcheck);
+  assert!(res.is_ok());
+}

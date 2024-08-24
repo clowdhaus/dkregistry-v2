@@ -33,6 +33,16 @@ pub enum MediaTypes {
   #[strum(serialize = "application/vnd.docker.container.image.v1+json")]
   #[strum(props(Sub = "vnd.docker.container.image.v1+json"))]
   ContainerConfigV1,
+
+  /// OCI Manifest
+  #[strum(serialize = "application/vnd.oci.image.manifest.v1+json")]
+  #[strum(props(Sub = "vnd.oci.image.manifest.v1+json"))]
+  OciImageManifest,
+  // OCI Image index
+  #[strum(serialize = "application/vnd.oci.image.index.v1+json")]
+  #[strum(props(Sub = "vnd.oci.image.index.v1+json"))]
+  OciImageIndexV1,
+
   /// Generic JSON
   #[strum(serialize = "application/json")]
   #[strum(props(Sub = "json"))]
@@ -45,12 +55,16 @@ impl MediaTypes {
     match (mtype.type_(), mtype.subtype(), mtype.suffix()) {
       (mime::APPLICATION, mime::JSON, _) => Ok(MediaTypes::ApplicationJson),
       (mime::APPLICATION, subt, Some(suff)) => match (subt.to_string().as_str(), suff.to_string().as_str()) {
+        // Docker
         ("vnd.docker.distribution.manifest.v1", "json") => Ok(MediaTypes::ManifestV2S1),
         ("vnd.docker.distribution.manifest.v1", "prettyjws") => Ok(MediaTypes::ManifestV2S1Signed),
         ("vnd.docker.distribution.manifest.v2", "json") => Ok(MediaTypes::ManifestV2S2),
         ("vnd.docker.distribution.manifest.list.v2", "json") => Ok(MediaTypes::ManifestList),
         ("vnd.docker.image.rootfs.diff.tar.gzip", _) => Ok(MediaTypes::ImageLayerTgz),
         ("vnd.docker.container.image.v1", "json") => Ok(MediaTypes::ContainerConfigV1),
+        // OCI
+        ("vnd.oci.image.manifest.v1", "json") => Ok(MediaTypes::OciImageManifest),
+        ("vnd.oci.image.index.v1", "json") => Ok(MediaTypes::OciImageIndexV1),
         _ => Err(crate::Error::UnknownMimeType(mtype.clone())),
       },
       _ => Err(crate::Error::UnknownMimeType(mtype.clone())),

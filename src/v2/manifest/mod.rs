@@ -51,7 +51,7 @@ impl Client {
 
     match status {
       StatusCode::OK => {}
-      _ => return Err(Error::UnexpectedHttpStatus(status)),
+      _ => return Err(ApiErrors::from(res).await),
     }
 
     let headers = res.headers();
@@ -73,7 +73,7 @@ impl Client {
         res.json::<ManifestSchema1Signed>().await.map(Manifest::S1Signed)?,
         content_digest,
       )),
-      mediatypes::MediaTypes::ManifestV2S2 => {
+      mediatypes::MediaTypes::ManifestV2S2 | mediatypes::MediaTypes::OciImageManifest => {
         let m = res.json::<ManifestSchema2Spec>().await?;
         Ok((
           m.fetch_config_blob(client_spare0, name.to_string())
@@ -82,7 +82,9 @@ impl Client {
           content_digest,
         ))
       }
-      mediatypes::MediaTypes::ManifestList => Ok((res.json::<ManifestList>().await.map(Manifest::ML)?, content_digest)),
+      mediatypes::MediaTypes::ManifestList | mediatypes::MediaTypes::OciImageIndexV1 => {
+        Ok((res.json::<ManifestList>().await.map(Manifest::ML)?, content_digest))
+      }
       unsupported => Err(Error::UnsupportedMediaType(unsupported)),
     }
   }
@@ -109,7 +111,7 @@ impl Client {
 
     match status {
       StatusCode::OK => {}
-      _ => return Err(Error::UnexpectedHttpStatus(status)),
+      _ => return Err(ApiErrors::from(res).await),
     }
 
     let headers = res.headers();
@@ -169,7 +171,7 @@ impl Client {
         Ok(Some(media_type))
       }
       StatusCode::NOT_FOUND => Ok(None),
-      _ => Err(Error::UnexpectedHttpStatus(status)),
+      _ => Err(ApiErrors::from(r).await),
     }
   }
 }
@@ -326,25 +328,28 @@ mod tests {
   use super::*;
   use crate::v2::Client;
 
-  #[test_case("not-gcr.io" => "application/vnd.docker.distribution.manifest.v2+json; q=0.5,application/vnd.docker.distribution.manifest.v1+prettyjws; q=0.4,application/vnd.docker.distribution.manifest.list.v2+json; q=0.5"; "Not gcr registry")]
-  #[test_case("gcr.io" => "application/vnd.docker.distribution.manifest.v2+json,application/vnd.docker.distribution.manifest.v1+prettyjws,application/vnd.docker.distribution.manifest.list.v2+json"; "gcr.io")]
-  #[test_case("foobar.gcr.io" => "application/vnd.docker.distribution.manifest.v2+json,application/vnd.docker.distribution.manifest.v1+prettyjws,application/vnd.docker.distribution.manifest.list.v2+json"; "Custom gcr.io registry")]
+  #[test_case("not-gcr.io" => "application/vnd.docker.distribution.manifest.v2+json; q=0.5,application/vnd.docker.distribution.manifest.v1+prettyjws; q=0.4,application/vnd.docker.distribution.manifest.list.v2+json; q=0.5,application/vnd.oci.image.manifest.v1+json; q=0.5,application/vnd.oci.image.index.v1+json; q=0.5"; "Not gcr registry")]
+  #[test_case("gcr.io" => "application/vnd.docker.distribution.manifest.v2+json,application/vnd.docker.distribution.manifest.v1+prettyjws,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.oci.image.index.v1+json"; "gcr.io")]
+  #[test_case("foobar.gcr.io" => "application/vnd.docker.distribution.manifest.v2+json,application/vnd.docker.distribution.manifest.v1+prettyjws,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.oci.image.index.v1+json"; "Custom gcr.io registry")]
   fn gcr_io_accept_headers(registry: &str) -> String {
     let client_builder = Client::configure().registry(registry);
     let client = client_builder.build().unwrap();
     let header_map = build_accept_headers(&client.accepted_types);
     header_map.get(header::ACCEPT).unwrap().to_str().unwrap().to_string()
   }
-  #[test_case(None => "application/vnd.docker.distribution.manifest.v2+json; q=0.5,application/vnd.docker.distribution.manifest.v1+prettyjws; q=0.4,application/vnd.docker.distribution.manifest.list.v2+json; q=0.5"; "Default settings")]
+
+  #[test_case(None => "application/vnd.docker.distribution.manifest.v2+json; q=0.5,application/vnd.docker.distribution.manifest.v1+prettyjws; q=0.4,application/vnd.docker.distribution.manifest.list.v2+json; q=0.5,application/vnd.oci.image.manifest.v1+json; q=0.5,application/vnd.oci.image.index.v1+json; q=0.5"; "Default settings")]
   #[test_case(Some(vec![
         (MediaTypes::ManifestV2S2, Some(0.5)),
         (MediaTypes::ManifestV2S1Signed, Some(0.2)),
         (MediaTypes::ManifestList, Some(0.5)),
-    ]) => "application/vnd.docker.distribution.manifest.v2+json; q=0.5,application/vnd.docker.distribution.manifest.v1+prettyjws; q=0.2,application/vnd.docker.distribution.manifest.list.v2+json; q=0.5"; "Custom accept types with weight")]
+        (MediaTypes::OciImageManifest, Some(0.2)),
+    ]) => "application/vnd.docker.distribution.manifest.v2+json; q=0.5,application/vnd.docker.distribution.manifest.v1+prettyjws; q=0.2,application/vnd.docker.distribution.manifest.list.v2+json; q=0.5,application/vnd.oci.image.manifest.v1+json; q=0.2"; "Custom accept types with weight")]
   #[test_case(Some(vec![
         (MediaTypes::ManifestV2S2, None),
         (MediaTypes::ManifestList, None),
-    ]) => "application/vnd.docker.distribution.manifest.v2+json,application/vnd.docker.distribution.manifest.list.v2+json"; "Custom accept types, no weight")]
+        (MediaTypes::OciImageIndexV1, None),
+    ]) => "application/vnd.docker.distribution.manifest.v2+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.index.v1+json"; "Custom accept types, no weight")]
   fn custom_accept_headers(accept_headers: Option<Vec<(MediaTypes, Option<f64>)>>) -> String {
     let registry = "https://example.com";
 
