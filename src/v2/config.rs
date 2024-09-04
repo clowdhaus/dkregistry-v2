@@ -102,10 +102,7 @@ impl Config {
 
     let accepted_types = match self.accepted_types {
       Some(a) => a,
-      None => match self.index == "gcr.io"
-                || self.index.ends_with(".gcr.io")
-                || self.index.ends_with(".k8s.io")
-            {
+      None => match self.index == "gcr.io" || self.index.ends_with(".gcr.io") || self.index.ends_with(".k8s.io") {
         false => vec![
           // accept header types and their q value, as documented in
           // https://tools.ietf.org/html/rfc7231#section-5.3.2
