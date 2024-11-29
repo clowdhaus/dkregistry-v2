@@ -96,14 +96,8 @@ fn parse_link(hdr: Option<&header::HeaderValue>) -> Option<String> {
   // TODO(lucab): this a brittle string-matching parser. Investigate
   // whether there is a a common library to do this, in the future.
 
-  // Raw Header value bytes.
-  let hval = match hdr {
-    Some(v) => v,
-    None => return None,
-  };
-
   // Header value string.
-  let sval = match hval.to_str() {
+  let sval = match hdr?.to_str() {
     Ok(v) => v.to_owned(),
     _ => return None,
   };
